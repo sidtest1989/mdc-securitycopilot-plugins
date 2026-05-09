@@ -14,11 +14,6 @@
       "description": "Azure Resource Manager"
     }
   ],
-  "security": [
-    {
-      "AzureAD": []
-    }
-  ],
   "paths": {
     "/subscriptions/{subscriptionId}/providers/Microsoft.Security/secureScores": {
       "get": {
@@ -378,20 +373,6 @@
     }
   },
   "components": {
-    "securitySchemes": {
-      "AzureAD": {
-        "type": "oauth2",
-        "flows": {
-          "authorizationCode": {
-            "authorizationUrl": "https://login.microsoftonline.com/common/oauth2/v2.0/authorize",
-            "tokenUrl": "https://login.microsoftonline.com/common/oauth2/v2.0/token",
-            "scopes": {
-              "https://management.azure.com/.default": "Azure Resource Manager access"
-            }
-          }
-        }
-      }
-    },
     "parameters": {
       "subscriptionId": {
         "name": "subscriptionId",
