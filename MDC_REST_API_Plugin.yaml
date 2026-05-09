@@ -1,0 +1,214 @@
+## ============================================================
+## Security Copilot Plugin — MDC REST API (No KQL)
+## Microsoft Defender for Cloud via Azure Management REST APIs
+## ============================================================
+##
+## Skills:
+##   1. GetSecureScore            — Overall MDC secure score
+##   2. ListSecureScores          — All initiative scores
+##   3. GetSecureScoreControls    — Score broken down by control
+##   4. ListRecommendations       — All unhealthy assessments
+##   5. GetResourceRecommendation — Check one resource against one recommendation
+##   6. ListAttackPaths           — Active attack paths (Preview)
+##   7. GetAttackPath             — Full detail of a single attack path
+##   8. ListSecurityAlerts        — Active MDC security alerts
+##
+## Auth: AAD (Security Reader role minimum on the subscription)
+##
+## BEFORE UPLOADING:
+##   Host MDC_REST_API_OpenAPI.yaml at a public URL (GitHub raw, Azure Blob, etc.)
+##   and update OpenApiSpecUrl below with that URL.
+##
+## Deploy:
+##   Security Copilot → Settings → Plugins → Upload Plugin → Upload THIS FILE
+## ============================================================
+
+Descriptor:
+  Name: MDC-REST-API
+  DisplayName: "MDC Security Posture (REST API)"
+  Description: >
+    Microsoft Defender for Cloud security posture skills powered by the
+    Azure Management REST API. No KQL or Log Analytics workspace needed.
+    Covers secure score, recommendations, attack paths, and security alerts
+    using live ARM API calls with real-time data.
+  SupportedAuthTypes:
+    - AAD
+  Publisher: "MDC CRI Team"
+  PrivacyUrl: "https://privacy.microsoft.com"
+  TermsOfUseUrl: "https://aka.ms/mdc/tos"
+  SchemaVersion: 2.0
+
+SkillGroups:
+
+  - Format: API
+    Settings:
+      OpenApiSpecUrl: "MDC_REST_API_OpenAPI.yaml"
+      EndpointUrl: "https://management.azure.com"
+
+    Skills:
+
+      - Name: GetSecureScore
+        DisplayName: "Get MDC Secure Score"
+        Description: >
+          Returns the Microsoft Defender for Cloud secure score for a subscription.
+          Shows current score, maximum possible score, percentage, and number of
+          unhealthy resources. Use ascScore as the initiative name for the default MDC score.
+        Inputs:
+          - Name: subscriptionId
+            Description: "Azure Subscription ID (GUID) to get the secure score for."
+            Required: true
+          - Name: secureScoreName
+            Description: "Initiative name. Use ascScore for the default MDC score."
+            Required: false
+            DefaultValue: "ascScore"
+        Settings:
+          Operation: GetSecureScore
+        Examples:
+          - "What is my MDC secure score?"
+          - "Get the secure score for subscription 00000000-0000-0000-0000-000000000000"
+          - "Show me the current MDC score"
+
+      - Name: ListSecureScores
+        DisplayName: "List All MDC Secure Scores"
+        Description: >
+          Returns the secure score for every security initiative in the subscription,
+          including Microsoft cloud security benchmark and any custom initiatives.
+        Inputs:
+          - Name: subscriptionId
+            Description: "Azure Subscription ID (GUID)."
+            Required: true
+        Settings:
+          Operation: ListSecureScores
+        Examples:
+          - "List all secure scores for my subscription"
+          - "Show all MDC initiative scores"
+
+      - Name: GetSecureScoreControls
+        DisplayName: "Get MDC Secure Score Controls Breakdown"
+        Description: >
+          Returns the MDC secure score broken down by security control category.
+          Each control shows current score, max score, percentage, and unhealthy
+          resource count. Helps identify weakest areas like MFA, system updates,
+          access management, and vulnerability remediation.
+        Inputs:
+          - Name: subscriptionId
+            Description: "Azure Subscription ID (GUID)."
+            Required: true
+          - Name: expand
+            Description: "Set to definition to include control metadata and remediation links."
+            Required: false
+            DefaultValue: "definition"
+        Settings:
+          Operation: ListSecureScoreControls
+        Examples:
+          - "Break down my MDC secure score by control"
+          - "Which MDC controls have the lowest scores?"
+          - "What are my weakest security controls?"
+
+      - Name: ListRecommendations
+        DisplayName: "List MDC Recommendations"
+        Description: >
+          Returns all MDC security recommendations for the subscription.
+          Each entry shows recommendation name, severity (High/Medium/Low),
+          status (Healthy/Unhealthy/NotApplicable), affected resource, and
+          remediation steps. No Log Analytics or KQL required.
+        Inputs:
+          - Name: subscriptionId
+            Description: "Azure Subscription ID (GUID)."
+            Required: true
+          - Name: expand
+            Description: "Use links to include portal remediation links, or metadata for full details."
+            Required: false
+            DefaultValue: "links"
+        Settings:
+          Operation: ListRecommendations
+        Examples:
+          - "List all MDC recommendations for my subscription"
+          - "Show me all high severity MDC recommendations"
+          - "What are the top unhealthy recommendations in MDC?"
+          - "Get all MDC security assessments"
+
+      - Name: GetResourceRecommendation
+        DisplayName: "Check MDC Recommendation for a Specific Resource"
+        Description: >
+          Checks whether a specific Azure resource is compliant with a specific MDC
+          recommendation. Returns status, cause if unhealthy, and remediation steps.
+          Use ListRecommendations first to get the assessment GUID.
+        Inputs:
+          - Name: subscriptionId
+            Description: "Azure Subscription ID (GUID)."
+            Required: true
+          - Name: resourceGroupName
+            Description: "The resource group containing the resource."
+            Required: true
+          - Name: resourceNamespace
+            Description: "Resource provider namespace, e.g. Microsoft.Compute"
+            Required: true
+          - Name: resourceType
+            Description: "Resource type within the namespace, e.g. virtualMachines"
+            Required: true
+          - Name: resourceName
+            Description: "The name of the specific resource."
+            Required: true
+          - Name: assessmentName
+            Description: "The assessment GUID from ListRecommendations."
+            Required: true
+        Settings:
+          Operation: GetResourceRecommendation
+        Examples:
+          - "Is my VM compliant with the MDE onboarding recommendation?"
+          - "Check if myVM passed the endpoint protection recommendation"
+
+      - Name: ListAttackPaths
+        DisplayName: "List MDC Attack Paths"
+        Description: >
+          Returns all active attack paths identified by Microsoft Defender for Cloud
+          Cloud Security Explorer. Shows chains of vulnerabilities an attacker could
+          exploit to reach a critical asset. API is currently in Preview.
+        Inputs:
+          - Name: subscriptionId
+            Description: "Azure Subscription ID (GUID)."
+            Required: true
+        Settings:
+          Operation: ListAttackPaths
+        Examples:
+          - "Show me all MDC attack paths"
+          - "What attack paths exist in my subscription?"
+          - "Are there any attack paths reaching sensitive data?"
+
+      - Name: GetAttackPath
+        DisplayName: "Get MDC Attack Path Details"
+        Description: >
+          Returns full details of a single MDC attack path including all nodes,
+          edges, entry point, target critical asset, and risk factors.
+          Use ListAttackPaths first to get the attack path ID.
+        Inputs:
+          - Name: subscriptionId
+            Description: "Azure Subscription ID (GUID)."
+            Required: true
+          - Name: attackPathId
+            Description: "The attack path ID from ListAttackPaths."
+            Required: true
+        Settings:
+          Operation: GetAttackPath
+        Examples:
+          - "Give me full details of this attack path"
+          - "What resources are involved in this attack path?"
+
+      - Name: ListSecurityAlerts
+        DisplayName: "List MDC Security Alerts"
+        Description: >
+          Returns all active Microsoft Defender for Cloud security alerts for
+          the subscription. Includes name, severity, status, compromised entity,
+          MITRE ATT&CK tactics, description, and remediation steps.
+        Inputs:
+          - Name: subscriptionId
+            Description: "Azure Subscription ID (GUID)."
+            Required: true
+        Settings:
+          Operation: ListSecurityAlerts
+        Examples:
+          - "Show me all active MDC security alerts"
+          - "Are there any high severity alerts in MDC?"
+          - "List security alerts for my subscription"
+          - "What threats has MDC detected?"
