@@ -11,6 +11,28 @@
       "description": "Azure Resource Manager"
     }
   ],
+  "security": [
+    {
+      "AzureAD": [
+        "https://management.azure.com/user_impersonation"
+      ]
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "AzureAD": {
+        "type": "oauth2",
+        "flows": {
+          "implicit": {
+            "authorizationUrl": "https://login.microsoftonline.com/common/oauth2/v2.0/authorize",
+            "scopes": {
+              "https://management.azure.com/user_impersonation": "Access Azure Resource Manager as the signed-in user"
+            }
+          }
+        }
+      }
+    }
+  },
   "paths": {
     "/subscriptions/{subscriptionId}/providers/Microsoft.Security/secureScores": {
       "get": {
