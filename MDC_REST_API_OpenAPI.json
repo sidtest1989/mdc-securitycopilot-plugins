@@ -383,8 +383,8 @@
         "type": "oauth2",
         "flows": {
           "authorizationCode": {
-            "authorizationUrl": "https://login.microsoftonline.com/common/oauth2/authorize",
-            "tokenUrl": "https://login.microsoftonline.com/common/oauth2/token",
+            "authorizationUrl": "https://login.microsoftonline.com/2149b5b3-feb7-40d3-898e-887abb10f656/oauth2/authorize",
+            "tokenUrl": "https://login.microsoftonline.com/2149b5b3-feb7-40d3-898e-887abb10f656/oauth2/token",
             "scopes": {
               "https://management.azure.com/.default": "Azure Resource Manager access"
             }
