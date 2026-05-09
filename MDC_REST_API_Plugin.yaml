@@ -42,7 +42,7 @@ SkillGroups:
 
   - Format: API
     Settings:
-      OpenApiSpecUrl: "https://raw.githubusercontent.com/sidtest1989/mdc-securitycopilot-plugins/main/MDC_REST_API_OpenAPI.yaml"
+      OpenApiSpecUrl: "https://raw.githubusercontent.com/sidtest1989/mdc-securitycopilot-plugins/main/MDC_REST_API_OpenAPI.json"
       EndpointUrl: "https://management.azure.com"
 
     Skills:
