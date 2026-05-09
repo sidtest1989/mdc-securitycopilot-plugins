@@ -18,10 +18,31 @@
         "summary": "List all Secure Scores for a subscription",
         "description": "Returns the secure score for each security initiative. Includes current score, max score, percentage, and unhealthy resource count.",
         "parameters": [
-          { "name": "subscriptionId", "in": "path", "required": true, "description": "Azure Subscription ID (GUID)", "schema": { "type": "string" } },
-          { "name": "api-version", "in": "query", "required": true, "description": "API version. Always use 2020-01-01", "schema": { "type": "string", "default": "2020-01-01" } }
+          {
+            "name": "subscriptionId",
+            "in": "path",
+            "required": true,
+            "description": "Azure Subscription ID (GUID)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "api-version",
+            "in": "query",
+            "required": false,
+            "description": "API version. Always use 2020-01-01",
+            "schema": {
+              "type": "string",
+              "default": "2020-01-01"
+            }
+          }
         ],
-        "responses": { "200": { "description": "List of secure scores" } }
+        "responses": {
+          "200": {
+            "description": "List of secure scores"
+          }
+        }
       }
     },
     "/subscriptions/{subscriptionId}/providers/Microsoft.Security/secureScores/{secureScoreName}": {
@@ -30,11 +51,41 @@
         "summary": "Get the MDC Secure Score for a subscription",
         "description": "Returns the Microsoft Defender for Cloud secure score. Use ascScore for the default MDC score.",
         "parameters": [
-          { "name": "subscriptionId", "in": "path", "required": true, "description": "Azure Subscription ID (GUID)", "schema": { "type": "string" } },
-          { "name": "secureScoreName", "in": "path", "required": true, "description": "Name of the secure score initiative. Use ascScore for default MDC score.", "schema": { "type": "string", "default": "ascScore" } },
-          { "name": "api-version", "in": "query", "required": true, "description": "API version. Always use 2020-01-01", "schema": { "type": "string", "default": "2020-01-01" } }
+          {
+            "name": "subscriptionId",
+            "in": "path",
+            "required": true,
+            "description": "Azure Subscription ID (GUID)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "secureScoreName",
+            "in": "path",
+            "required": true,
+            "description": "Name of the secure score initiative. Use ascScore for default MDC score.",
+            "schema": {
+              "type": "string",
+              "default": "ascScore"
+            }
+          },
+          {
+            "name": "api-version",
+            "in": "query",
+            "required": false,
+            "description": "API version. Always use 2020-01-01",
+            "schema": {
+              "type": "string",
+              "default": "2020-01-01"
+            }
+          }
         ],
-        "responses": { "200": { "description": "Secure score details" } }
+        "responses": {
+          "200": {
+            "description": "Secure score details"
+          }
+        }
       }
     },
     "/subscriptions/{subscriptionId}/providers/Microsoft.Security/secureScoreControls": {
@@ -43,10 +94,31 @@
         "summary": "Get MDC Secure Score breakdown by control",
         "description": "Returns the secure score broken down by control category.",
         "parameters": [
-          { "name": "subscriptionId", "in": "path", "required": true, "description": "Azure Subscription ID (GUID)", "schema": { "type": "string" } },
-          { "name": "api-version", "in": "query", "required": true, "description": "API version. Always use 2020-01-01", "schema": { "type": "string", "default": "2020-01-01" } }
+          {
+            "name": "subscriptionId",
+            "in": "path",
+            "required": true,
+            "description": "Azure Subscription ID (GUID)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "api-version",
+            "in": "query",
+            "required": false,
+            "description": "API version. Always use 2020-01-01",
+            "schema": {
+              "type": "string",
+              "default": "2020-01-01"
+            }
+          }
         ],
-        "responses": { "200": { "description": "Secure score controls breakdown" } }
+        "responses": {
+          "200": {
+            "description": "Secure score controls breakdown"
+          }
+        }
       }
     },
     "/subscriptions/{subscriptionId}/providers/Microsoft.Security/assessments": {
@@ -55,10 +127,31 @@
         "summary": "List all MDC Recommendations for a subscription",
         "description": "Returns all security assessments (recommendations) for the subscription. Each assessment shows severity, status (Healthy/Unhealthy/NotApplicable), and remediation steps.",
         "parameters": [
-          { "name": "subscriptionId", "in": "path", "required": true, "description": "Azure Subscription ID (GUID)", "schema": { "type": "string" } },
-          { "name": "api-version", "in": "query", "required": true, "description": "API version. Always use 2021-06-01", "schema": { "type": "string", "default": "2021-06-01" } }
+          {
+            "name": "subscriptionId",
+            "in": "path",
+            "required": true,
+            "description": "Azure Subscription ID (GUID)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "api-version",
+            "in": "query",
+            "required": false,
+            "description": "API version. Always use 2021-06-01",
+            "schema": {
+              "type": "string",
+              "default": "2021-06-01"
+            }
+          }
         ],
-        "responses": { "200": { "description": "List of assessments" } }
+        "responses": {
+          "200": {
+            "description": "List of assessments"
+          }
+        }
       }
     },
     "/subscriptions/{subscriptionId}/providers/Microsoft.Security/attackPaths": {
@@ -67,10 +160,31 @@
         "summary": "List all Attack Paths for a subscription",
         "description": "Returns all identified attack paths in the subscription.",
         "parameters": [
-          { "name": "subscriptionId", "in": "path", "required": true, "description": "Azure Subscription ID (GUID)", "schema": { "type": "string" } },
-          { "name": "api-version", "in": "query", "required": true, "description": "API version. Always use 2023-03-01-preview", "schema": { "type": "string", "default": "2023-03-01-preview" } }
+          {
+            "name": "subscriptionId",
+            "in": "path",
+            "required": true,
+            "description": "Azure Subscription ID (GUID)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "api-version",
+            "in": "query",
+            "required": false,
+            "description": "API version. Always use 2023-03-01-preview",
+            "schema": {
+              "type": "string",
+              "default": "2023-03-01-preview"
+            }
+          }
         ],
-        "responses": { "200": { "description": "List of attack paths" } }
+        "responses": {
+          "200": {
+            "description": "List of attack paths"
+          }
+        }
       }
     },
     "/subscriptions/{subscriptionId}/providers/Microsoft.Security/alerts": {
@@ -79,10 +193,31 @@
         "summary": "List all MDC Security Alerts for a subscription",
         "description": "Returns active security alerts from Microsoft Defender for Cloud. Includes alert name, severity, compromised entity, and remediation steps.",
         "parameters": [
-          { "name": "subscriptionId", "in": "path", "required": true, "description": "Azure Subscription ID (GUID)", "schema": { "type": "string" } },
-          { "name": "api-version", "in": "query", "required": true, "description": "API version. Always use 2022-01-01", "schema": { "type": "string", "default": "2022-01-01" } }
+          {
+            "name": "subscriptionId",
+            "in": "path",
+            "required": true,
+            "description": "Azure Subscription ID (GUID)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "api-version",
+            "in": "query",
+            "required": false,
+            "description": "API version. Always use 2022-01-01",
+            "schema": {
+              "type": "string",
+              "default": "2022-01-01"
+            }
+          }
         ],
-        "responses": { "200": { "description": "List of security alerts" } }
+        "responses": {
+          "200": {
+            "description": "List of security alerts"
+          }
+        }
       }
     }
   }
