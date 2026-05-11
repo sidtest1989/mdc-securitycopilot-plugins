@@ -23,8 +23,9 @@
       "AzureAD": {
         "type": "oauth2",
         "flows": {
-          "implicit": {
+          "authorizationCode": {
             "authorizationUrl": "https://login.microsoftonline.com/common/oauth2/v2.0/authorize",
+            "tokenUrl": "https://login.microsoftonline.com/common/oauth2/v2.0/token",
             "scopes": {
               "https://management.azure.com/user_impersonation": "Access Azure Resource Manager as the signed-in user"
             }
