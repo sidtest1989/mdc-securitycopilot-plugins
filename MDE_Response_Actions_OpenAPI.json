@@ -1,0 +1,318 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "MDE Device Response Actions API",
+    "description": "Microsoft Defender for Endpoint response actions: isolate device, run antivirus scan, and offboard device using MDE machine ID. Targets test tenant 2149b5b3-feb7-40d3-898e-887abb10f656.",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://api.securitycenter.microsoft.com",
+      "description": "MDE Security Center API"
+    }
+  ],
+  "security": [
+    {
+      "AzureAD": [
+        "https://api.securitycenter.microsoft.com/.default"
+      ]
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "AzureAD": {
+        "type": "oauth2",
+        "flows": {
+          "authorizationCode": {
+            "authorizationUrl": "https://login.microsoftonline.com/2149b5b3-feb7-40d3-898e-887abb10f656/oauth2/v2.0/authorize",
+            "tokenUrl": "https://login.microsoftonline.com/2149b5b3-feb7-40d3-898e-887abb10f656/oauth2/v2.0/token",
+            "scopes": {
+              "https://api.securitycenter.microsoft.com/.default": "Access Microsoft Defender for Endpoint APIs"
+            }
+          }
+        }
+      }
+    },
+    "parameters": {
+      "machineId": {
+        "name": "id",
+        "in": "path",
+        "required": true,
+        "description": "MDE Machine ID (40-character SHA1 hex string, e.g. 2da2a04cf3c0a369b9a2c6e579884c36d56e899e)",
+        "schema": {
+          "type": "string",
+          "pattern": "^[0-9a-fA-F]{40}$"
+        }
+      }
+    },
+    "schemas": {
+      "ActionResult": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "description": "Action ID" },
+          "type": { "type": "string", "description": "Action type" },
+          "status": { "type": "string", "description": "Action status (Pending, InProgress, Succeeded, Failed)" },
+          "machineId": { "type": "string", "description": "Machine ID the action targets" },
+          "computerDnsName": { "type": "string", "description": "Machine DNS name" },
+          "creationDateTimeUtc": { "type": "string", "format": "date-time" },
+          "lastUpdateDateTimeUtc": { "type": "string", "format": "date-time" },
+          "requestor": { "type": "string", "description": "UPN of the user who submitted the action" },
+          "requestorComment": { "type": "string", "description": "Comment provided with the action request" }
+        }
+      },
+      "MachineInfo": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "computerDnsName": { "type": "string" },
+          "osPlatform": { "type": "string" },
+          "osVersion": { "type": "string" },
+          "healthStatus": { "type": "string" },
+          "onboardingStatus": { "type": "string" },
+          "riskScore": { "type": "string" },
+          "exposureLevel": { "type": "string" },
+          "lastSeen": { "type": "string", "format": "date-time" },
+          "agentVersion": { "type": "string" },
+          "isAadJoined": { "type": "boolean" }
+        }
+      }
+    }
+  },
+  "paths": {
+
+    "/api/machines/{id}": {
+      "get": {
+        "operationId": "GetMachineInfo",
+        "summary": "Get device information by MDE machine ID",
+        "description": "Returns detailed information about a specific device including health status, OS, risk score, exposure level, and onboarding status. Use this before taking any response action to confirm the device ID is correct.",
+        "parameters": [
+          { "$ref": "#/components/parameters/machineId" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Device details",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/MachineInfo" }
+              }
+            }
+          },
+          "404": { "description": "Machine not found" },
+          "401": { "description": "Unauthorized — check token and permissions" }
+        }
+      }
+    },
+
+    "/api/machines/{id}/isolate": {
+      "post": {
+        "operationId": "IsolateDevice",
+        "summary": "Isolate a device from the network",
+        "description": "Isolates a device from the network while keeping connectivity to the MDE service. Use Full isolation to block all network traffic except MDE. Use Selective to allow Outlook and Teams traffic. Requires Machine.Isolate permission.",
+        "parameters": [
+          { "$ref": "#/components/parameters/machineId" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["Comment", "IsolationType"],
+                "properties": {
+                  "Comment": {
+                    "type": "string",
+                    "description": "Reason for isolating the device. Appears in the action audit log.",
+                    "example": "Isolating device for security investigation"
+                  },
+                  "IsolationType": {
+                    "type": "string",
+                    "description": "Full = block all network except MDE. Selective = allow Outlook and Teams.",
+                    "enum": ["Full", "Selective"],
+                    "default": "Full"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Isolation action queued successfully",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ActionResult" }
+              }
+            }
+          },
+          "400": { "description": "Bad request — invalid machine ID or body" },
+          "401": { "description": "Unauthorized" },
+          "403": { "description": "Forbidden — missing Machine.Isolate permission" },
+          "404": { "description": "Machine not found" }
+        }
+      }
+    },
+
+    "/api/machines/{id}/unisolate": {
+      "post": {
+        "operationId": "ReleaseFromIsolation",
+        "summary": "Release a device from network isolation",
+        "description": "Removes network isolation from a previously isolated device and restores full network connectivity. Requires Machine.Isolate permission.",
+        "parameters": [
+          { "$ref": "#/components/parameters/machineId" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["Comment"],
+                "properties": {
+                  "Comment": {
+                    "type": "string",
+                    "description": "Reason for releasing isolation.",
+                    "example": "Investigation complete, releasing isolation"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Unisolate action queued successfully",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ActionResult" }
+              }
+            }
+          },
+          "400": { "description": "Bad request" },
+          "401": { "description": "Unauthorized" },
+          "404": { "description": "Machine not found" }
+        }
+      }
+    },
+
+    "/api/machines/{id}/runAntiVirusScan": {
+      "post": {
+        "operationId": "RunAntiVirusScan",
+        "summary": "Run an antivirus scan on a device",
+        "description": "Triggers a Windows Defender Antivirus scan on the specified device. Quick scan checks common malware locations. Full scan checks the entire disk and takes longer. Requires Machine.Scan permission.",
+        "parameters": [
+          { "$ref": "#/components/parameters/machineId" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["Comment", "ScanType"],
+                "properties": {
+                  "Comment": {
+                    "type": "string",
+                    "description": "Reason for running the scan. Appears in the action audit log.",
+                    "example": "Running antivirus scan due to suspicious activity"
+                  },
+                  "ScanType": {
+                    "type": "string",
+                    "description": "Quick = fast scan of common malware locations. Full = complete disk scan.",
+                    "enum": ["Quick", "Full"],
+                    "default": "Quick"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Antivirus scan action queued successfully",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ActionResult" }
+              }
+            }
+          },
+          "400": { "description": "Bad request — invalid machine ID or scan type" },
+          "401": { "description": "Unauthorized" },
+          "403": { "description": "Forbidden — missing Machine.Scan permission" },
+          "404": { "description": "Machine not found" }
+        }
+      }
+    },
+
+    "/api/machines/{id}/offboard": {
+      "post": {
+        "operationId": "OffboardDevice",
+        "summary": "Offboard a device from MDE",
+        "description": "Offboards the specified device from Microsoft Defender for Endpoint. Once offboarded, the device will stop sending telemetry and will no longer appear as active in the MDE portal. This action is irreversible without re-onboarding. Requires Machine.Offboard permission.",
+        "parameters": [
+          { "$ref": "#/components/parameters/machineId" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["Comment"],
+                "properties": {
+                  "Comment": {
+                    "type": "string",
+                    "description": "Reason for offboarding the device. Appears in the audit log.",
+                    "example": "Device decommissioned and removed from service"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Offboard action queued successfully",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ActionResult" }
+              }
+            }
+          },
+          "400": { "description": "Bad request" },
+          "401": { "description": "Unauthorized" },
+          "403": { "description": "Forbidden — missing Machine.Offboard permission" },
+          "404": { "description": "Machine not found" }
+        }
+      }
+    },
+
+    "/api/machineactions/{actionId}": {
+      "get": {
+        "operationId": "GetActionStatus",
+        "summary": "Check status of a response action",
+        "description": "Returns the current status of a response action (Pending, InProgress, Succeeded, Failed, Cancelled). Use the action ID returned from IsolateDevice, RunAntiVirusScan, or OffboardDevice to poll for completion.",
+        "parameters": [
+          {
+            "name": "actionId",
+            "in": "path",
+            "required": true,
+            "description": "Action ID returned from a response action call",
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Action status details",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ActionResult" }
+              }
+            }
+          },
+          "404": { "description": "Action not found" }
+        }
+      }
+    }
+
+  }
+}

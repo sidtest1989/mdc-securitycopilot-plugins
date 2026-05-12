@@ -1,0 +1,175 @@
+## ============================================================
+## Security Copilot Plugin — MDE Device Response Actions
+## Microsoft Defender for Endpoint via Security Center REST API
+## ============================================================
+##
+## Skills:
+##   1. GetMachineInfo         — Lookup device details by MDE machine ID
+##   2. IsolateDevice          — Isolate a device (Full or Selective)
+##   3. ReleaseFromIsolation   — Remove network isolation from a device
+##   4. RunAntiVirusScan       — Trigger Quick or Full AV scan on a device
+##   5. OffboardDevice         — Offboard a device from MDE
+##   6. GetActionStatus        — Poll status of any response action
+##
+## Auth: AAD — Test Tenant 2149b5b3-feb7-40d3-898e-887abb10f656
+##       Scope: https://api.securitycenter.microsoft.com/.default
+##
+## Required API Permissions (App or Delegated):
+##   - Machine.Read.All       (GetMachineInfo, GetActionStatus)
+##   - Machine.Isolate        (IsolateDevice, ReleaseFromIsolation)
+##   - Machine.Scan           (RunAntiVirusScan)
+##   - Machine.Offboard       (OffboardDevice)
+##
+## Deploy:
+##   1. Push MDE_Response_Actions_OpenAPI.json to GitHub (public raw URL)
+##   2. Security Copilot → Settings → Plugins → Upload Plugin → Upload THIS FILE
+## ============================================================
+
+Descriptor:
+  Name: MDE-Response-Actions
+  DisplayName: "MDE Device Response Actions"
+  Description: >
+    Microsoft Defender for Endpoint response action skills using the MDE Security Center
+    REST API. Supports isolating devices, running antivirus scans, offboarding devices,
+    and checking action status — all by MDE machine ID or device ID.
+    Targets test tenant 2149b5b3-feb7-40d3-898e-887abb10f656.
+  SupportedAuthTypes:
+    - AAD
+  Publisher: "MDC CRI Team"
+  PrivacyUrl: "https://privacy.microsoft.com"
+  TermsOfUseUrl: "https://aka.ms/mde/tos"
+  SchemaVersion: 2.0
+
+SkillGroups:
+
+  - Format: API
+    Settings:
+      OpenApiSpecUrl: "https://raw.githubusercontent.com/sidtest1989/mdc-securitycopilot-plugins/main/MDE_Response_Actions_OpenAPI.json"
+      EndpointUrl: "https://api.securitycenter.microsoft.com"
+
+    Skills:
+
+      - Name: GetMachineInfo
+        DisplayName: "Get Device Info by Machine ID"
+        Description: >
+          Returns detailed information about a specific device including health status,
+          OS platform, risk score, exposure level, last seen time, and onboarding status.
+          Always use this first to confirm the device ID before taking response actions.
+        Inputs:
+          - Name: id
+            Description: "MDE Machine ID — 40-character SHA1 hex string (e.g. 2da2a04cf3c0a369b9a2c6e579884c36d56e899e)"
+            Required: true
+        Settings:
+          Operation: GetMachineInfo
+        Examples:
+          - "Get device info for machine ID 2da2a04cf3c0a369b9a2c6e579884c36d56e899e"
+          - "Show me details for MDE device 2da2a04cf3c0a369b9a2c6e579884c36d56e899e"
+          - "What is the health status of device 2da2a04cf3c0a369b9a2c6e579884c36d56e899e"
+
+      - Name: IsolateDevice
+        DisplayName: "Isolate Device from Network"
+        Description: >
+          Isolates a device from the network while keeping connectivity to the MDE service.
+          Full isolation blocks all network traffic except MDE telemetry.
+          Selective isolation allows Outlook and Teams traffic through.
+          Use this when a device is suspected compromised and needs containment.
+        Inputs:
+          - Name: id
+            Description: "MDE Machine ID — 40-character SHA1 hex string"
+            Required: true
+          - Name: Comment
+            Description: "Reason for isolating the device. This appears in the audit log."
+            Required: true
+          - Name: IsolationType
+            Description: "Full = block all network except MDE. Selective = allow Outlook and Teams."
+            Required: false
+            DefaultValue: "Full"
+        Settings:
+          Operation: IsolateDevice
+        Examples:
+          - "Isolate device 2da2a04cf3c0a369b9a2c6e579884c36d56e899e due to ransomware activity"
+          - "Contain machine 2da2a04cf3c0a369b9a2c6e579884c36d56e899e with selective isolation"
+          - "Network isolate MDE device 2da2a04cf3c0a369b9a2c6e579884c36d56e899e"
+
+      - Name: ReleaseFromIsolation
+        DisplayName: "Release Device from Isolation"
+        Description: >
+          Removes network isolation from a previously isolated device and restores
+          full network connectivity. Use this after the investigation is complete
+          and the device has been confirmed clean.
+        Inputs:
+          - Name: id
+            Description: "MDE Machine ID — 40-character SHA1 hex string"
+            Required: true
+          - Name: Comment
+            Description: "Reason for releasing isolation (e.g. investigation complete)."
+            Required: true
+        Settings:
+          Operation: ReleaseFromIsolation
+        Examples:
+          - "Release device 2da2a04cf3c0a369b9a2c6e579884c36d56e899e from isolation"
+          - "Unisolate machine 2da2a04cf3c0a369b9a2c6e579884c36d56e899e, investigation complete"
+          - "Remove network containment from device 2da2a04cf3c0a369b9a2c6e579884c36d56e899e"
+
+      - Name: RunAntiVirusScan
+        DisplayName: "Run Antivirus Scan on Device"
+        Description: >
+          Triggers a Microsoft Defender Antivirus scan on the specified device.
+          Quick scan checks common malware locations and finishes in minutes.
+          Full scan checks the entire disk and may take hours.
+          Use Quick for routine checks; Full when deep inspection is required.
+        Inputs:
+          - Name: id
+            Description: "MDE Machine ID — 40-character SHA1 hex string"
+            Required: true
+          - Name: Comment
+            Description: "Reason for running the scan. Appears in the action audit log."
+            Required: true
+          - Name: ScanType
+            Description: "Quick = fast scan of common malware locations. Full = complete disk scan."
+            Required: false
+            DefaultValue: "Quick"
+        Settings:
+          Operation: RunAntiVirusScan
+        Examples:
+          - "Run a quick antivirus scan on device 2da2a04cf3c0a369b9a2c6e579884c36d56e899e"
+          - "Run a full AV scan on machine 2da2a04cf3c0a369b9a2c6e579884c36d56e899e due to suspicious activity"
+          - "Trigger antivirus scan on MDE device 2da2a04cf3c0a369b9a2c6e579884c36d56e899e"
+
+      - Name: OffboardDevice
+        DisplayName: "Offboard Device from MDE"
+        Description: >
+          Offboards the specified device from Microsoft Defender for Endpoint.
+          After offboarding, the device stops sending telemetry and is no longer
+          monitored in the MDE portal. This is irreversible without re-onboarding.
+          Use for decommissioned or retired devices only.
+        Inputs:
+          - Name: id
+            Description: "MDE Machine ID — 40-character SHA1 hex string"
+            Required: true
+          - Name: Comment
+            Description: "Reason for offboarding (e.g. device decommissioned). Appears in audit log."
+            Required: true
+        Settings:
+          Operation: OffboardDevice
+        Examples:
+          - "Offboard device 2da2a04cf3c0a369b9a2c6e579884c36d56e899e, it has been decommissioned"
+          - "Remove device 2da2a04cf3c0a369b9a2c6e579884c36d56e899e from MDE monitoring"
+          - "Offboard MDE machine 2da2a04cf3c0a369b9a2c6e579884c36d56e899e"
+
+      - Name: GetActionStatus
+        DisplayName: "Check Response Action Status"
+        Description: >
+          Returns the current status of any MDE response action (Pending, InProgress,
+          Succeeded, Failed, Cancelled). Use the action ID returned from IsolateDevice,
+          RunAntiVirusScan, ReleaseFromIsolation, or OffboardDevice to check if it completed.
+        Inputs:
+          - Name: actionId
+            Description: "Action ID returned from a previous response action (IsolateDevice, RunAntiVirusScan, etc.)"
+            Required: true
+        Settings:
+          Operation: GetActionStatus
+        Examples:
+          - "Check status of action a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+          - "Has the isolation action a1b2c3d4-e5f6-7890-abcd-ef1234567890 completed?"
+          - "Get result of MDE action a1b2c3d4-e5f6-7890-abcd-ef1234567890"
