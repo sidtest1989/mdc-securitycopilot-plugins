@@ -11,8 +11,11 @@
 ##   5. OffboardDevice         — Offboard a device from MDE
 ##   6. GetActionStatus        — Poll status of any response action
 ##
-## Auth: AAD — Test Tenant 2149b5b3-feb7-40d3-898e-887abb10f656
-##       Scope: https://api.securitycenter.microsoft.com/.default
+## Auth: AAD (Client Credentials / App-Only)
+##       Tenant:    2149b5b3-feb7-40d3-898e-887abb10f656
+##       Client ID: f2cf129f-4069-4966-af2d-2b8f0fe432e4
+##       Scope:     https://api.securitycenter.microsoft.com/.default
+##       Token URL: https://login.microsoftonline.com/2149b5b3-feb7-40d3-898e-887abb10f656/oauth2/v2.0/token
 ##
 ## Required API Permissions (App or Delegated):
 ##   - Machine.Read.All       (GetMachineInfo, GetActionStatus)
@@ -35,6 +38,8 @@ Descriptor:
     Targets test tenant 2149b5b3-feb7-40d3-898e-887abb10f656.
   SupportedAuthTypes:
     - AAD
+  AADTenantId: "2149b5b3-feb7-40d3-898e-887abb10f656"
+  AADClientId: "f2cf129f-4069-4966-af2d-2b8f0fe432e4"
   Publisher: "MDC CRI Team"
   PrivacyUrl: "https://privacy.microsoft.com"
   TermsOfUseUrl: "https://aka.ms/mde/tos"

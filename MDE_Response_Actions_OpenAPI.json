@@ -23,8 +23,7 @@
       "AzureAD": {
         "type": "oauth2",
         "flows": {
-          "authorizationCode": {
-            "authorizationUrl": "https://login.microsoftonline.com/2149b5b3-feb7-40d3-898e-887abb10f656/oauth2/v2.0/authorize",
+          "clientCredentials": {
             "tokenUrl": "https://login.microsoftonline.com/2149b5b3-feb7-40d3-898e-887abb10f656/oauth2/v2.0/token",
             "scopes": {
               "https://api.securitycenter.microsoft.com/.default": "Access Microsoft Defender for Endpoint APIs"
