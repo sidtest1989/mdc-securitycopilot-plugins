@@ -14,10 +14,7 @@
   "security": [
     {
       "AzureAD": [
-        "https://api.securitycenter.microsoft.com/Machine.Read.All",
-        "https://api.securitycenter.microsoft.com/Machine.Isolate",
-        "https://api.securitycenter.microsoft.com/Machine.Scan",
-        "https://api.securitycenter.microsoft.com/Machine.Offboard"
+        "https://api.securitycenter.microsoft.com/.default"
       ]
     }
   ],
@@ -26,14 +23,10 @@
       "AzureAD": {
         "type": "oauth2",
         "flows": {
-          "authorizationCode": {
-            "authorizationUrl": "https://login.microsoftonline.com/2149b5b3-feb7-40d3-898e-887abb10f656/oauth2/v2.0/authorize",
+          "clientCredentials": {
             "tokenUrl": "https://login.microsoftonline.com/2149b5b3-feb7-40d3-898e-887abb10f656/oauth2/v2.0/token",
             "scopes": {
-              "https://api.securitycenter.microsoft.com/Machine.Read.All": "Read machine information",
-              "https://api.securitycenter.microsoft.com/Machine.Isolate": "Isolate and unisolate machines",
-              "https://api.securitycenter.microsoft.com/Machine.Scan": "Run antivirus scans on machines",
-              "https://api.securitycenter.microsoft.com/Machine.Offboard": "Offboard machines from MDE"
+              "https://api.securitycenter.microsoft.com/.default": "Access Microsoft Defender for Endpoint APIs"
             }
           }
         }
