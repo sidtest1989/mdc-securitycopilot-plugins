@@ -1,0 +1,321 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "MDE Linux Offboard via Live Response API",
+    "description": "Offboard a Linux device from Microsoft Defender for Endpoint using the Live Response API. Identifies OS type (RHEL/Ubuntu/Debian/SLES), uploads the uninstall script, runs it remotely, and verifies completion. Tenant: 2149b5b3-feb7-40d3-898e-887abb10f656.",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://api.securitycenter.microsoft.com",
+      "description": "MDE Security Center API"
+    }
+  ],
+  "security": [
+    {
+      "AzureAD": [
+        "https://api.securitycenter.microsoft.com/.default"
+      ]
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "AzureAD": {
+        "type": "oauth2",
+        "flows": {
+          "clientCredentials": {
+            "tokenUrl": "https://login.microsoftonline.com/2149b5b3-feb7-40d3-898e-887abb10f656/oauth2/v2.0/token",
+            "scopes": {
+              "https://api.securitycenter.microsoft.com/.default": "Access MDE APIs"
+            }
+          }
+        }
+      }
+    },
+    "schemas": {
+      "MachineInfo": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "computerDnsName": { "type": "string" },
+          "osPlatform": { "type": "string", "description": "e.g. Linux" },
+          "osVersion": { "type": "string" },
+          "version": { "type": "string", "description": "OS distribution version" },
+          "healthStatus": { "type": "string" },
+          "onboardingStatus": { "type": "string" },
+          "riskScore": { "type": "string" },
+          "lastSeen": { "type": "string", "format": "date-time" },
+          "agentVersion": { "type": "string" },
+          "osBuild": { "type": "integer" }
+        }
+      },
+      "LiveResponseAction": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "description": "Machine action ID — use this to poll status and get result link" },
+          "type": { "type": "string" },
+          "status": { "type": "string", "description": "Pending | InProgress | Succeeded | Failed | Cancelled" },
+          "machineId": { "type": "string" },
+          "computerDnsName": { "type": "string" },
+          "creationDateTimeUtc": { "type": "string", "format": "date-time" },
+          "lastUpdateDateTimeUtc": { "type": "string", "format": "date-time" },
+          "requestor": { "type": "string" },
+          "requestorComment": { "type": "string" },
+          "commands": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "index": { "type": "integer" },
+                "startTime": { "type": "string" },
+                "endTime": { "type": "string" },
+                "commandStatus": { "type": "string" },
+                "errors": { "type": "array", "items": { "type": "string" } },
+                "command": { "type": "object" }
+              }
+            }
+          }
+        }
+      },
+      "LiveResponseResultLink": {
+        "type": "object",
+        "properties": {
+          "@odata.context": { "type": "string" },
+          "value": { "type": "string", "description": "SAS URL to download the script output file" }
+        }
+      },
+      "LibraryUploadResponse": {
+        "type": "object",
+        "properties": {
+          "fileName": { "type": "string" },
+          "sha256": { "type": "string" },
+          "description": { "type": "string" },
+          "creationTime": { "type": "string" },
+          "lastUpdatedTime": { "type": "string" },
+          "createdBy": { "type": "string" },
+          "hasParameters": { "type": "boolean" }
+        }
+      }
+    }
+  },
+  "paths": {
+
+    "/api/machines/{id}": {
+      "get": {
+        "operationId": "GetLinuxMachineInfo",
+        "summary": "Get Linux machine info and identify OS distribution",
+        "description": "Returns machine details including OS platform, version, health status and onboarding status. Use this FIRST to confirm the device is Linux and identify if it is RHEL (uses yum), Ubuntu/Debian (uses apt), or SLES (uses zypper) before running the offboard script. Check the osPlatform and osVersion fields.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "MDE Machine ID (40-character SHA1 hex string)",
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Machine details including OS distribution",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/MachineInfo" }
+              }
+            }
+          },
+          "403": { "description": "Forbidden — Machine.Read.All permission required" },
+          "404": { "description": "Machine not found" }
+        }
+      }
+    },
+
+    "/api/libraryfiles": {
+      "post": {
+        "operationId": "UploadOffboardScript",
+        "summary": "Upload the Linux offboard script to the Live Response library",
+        "description": "Uploads the trigger_defender_uninstall.sh script to the MDE Live Response library. This script auto-detects the Linux package manager (yum for RHEL, apt for Ubuntu/Debian, zypper for SLES) and schedules mdatp removal via cron. Must be done before running a live response session. Requires Library.Manage permission. If the script is already uploaded, set OverrideIfExists to true.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": ["file"],
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "The shell script file (trigger_defender_uninstall.sh)"
+                  },
+                  "Description": {
+                    "type": "string",
+                    "description": "Description of the script",
+                    "default": "Linux MDE offboard script — auto-detects yum/apt/zypper and uninstalls mdatp"
+                  },
+                  "OverrideIfExists": {
+                    "type": "string",
+                    "description": "Set to true to overwrite if script already exists in library",
+                    "default": "true"
+                  },
+                  "HasParameters": {
+                    "type": "string",
+                    "description": "Set to false — this script takes no parameters",
+                    "default": "false"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Script uploaded successfully",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/LibraryUploadResponse" }
+              }
+            }
+          },
+          "400": { "description": "Bad request — invalid file or parameters" },
+          "403": { "description": "Forbidden — Library.Manage permission required" }
+        }
+      }
+    },
+
+    "/api/machines/{machineId}/runliveresponse": {
+      "post": {
+        "operationId": "RunLinuxOffboard",
+        "summary": "Run the Linux offboard script via Live Response on the device",
+        "description": "Starts a Live Response session on the specified Linux device and executes trigger_defender_uninstall.sh. The script detects whether the device uses yum (RHEL/CentOS), apt (Ubuntu/Debian), or zypper (SLES) and schedules mdatp removal via cron. Returns a machine action ID — use GetOffboardActionStatus to poll until status is Succeeded. Requires Machine.LiveResponse permission.",
+        "parameters": [
+          {
+            "name": "machineId",
+            "in": "path",
+            "required": true,
+            "description": "MDE Machine ID (40-character SHA1 hex string)",
+            "schema": { "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["Commands", "Comment"],
+                "properties": {
+                  "Commands": {
+                    "type": "array",
+                    "description": "List of commands to run in the Live Response session",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "type": { "type": "string", "enum": ["RunScript"] },
+                        "params": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "key": { "type": "string" },
+                              "value": { "type": "string" }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "default": [
+                      {
+                        "type": "RunScript",
+                        "params": [
+                          {
+                            "key": "ScriptName",
+                            "value": "trigger_defender_uninstall.sh"
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  "Comment": {
+                    "type": "string",
+                    "description": "Reason for running the live response. Appears in audit log.",
+                    "default": "Offboarding Linux device via Security Copilot Live Response"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Live response action queued. Copy the id field to check status.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/LiveResponseAction" }
+              }
+            }
+          },
+          "400": { "description": "Bad request — invalid machine ID or command" },
+          "403": { "description": "Forbidden — Machine.LiveResponse permission required" },
+          "404": { "description": "Machine not found" }
+        }
+      }
+    },
+
+    "/api/machineactions/{actionId}": {
+      "get": {
+        "operationId": "GetOffboardActionStatus",
+        "summary": "Check the status of the offboard live response action",
+        "description": "Polls the status of the live response action. Status values: Pending (queued), InProgress (running on device), Succeeded (script executed), Failed (error), Cancelled. Wait for Succeeded before downloading results. Use the action ID returned from RunLinuxOffboard.",
+        "parameters": [
+          {
+            "name": "actionId",
+            "in": "path",
+            "required": true,
+            "description": "Machine action ID returned from RunLinuxOffboard",
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Action status and command details",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/LiveResponseAction" }
+              }
+            }
+          },
+          "404": { "description": "Action not found" }
+        }
+      }
+    },
+
+    "/api/machineactions/{actionId}/GetLiveResponseResultDownloadLink(index=0)": {
+      "get": {
+        "operationId": "GetOffboardResultDownloadLink",
+        "summary": "Get the download link for the offboard script output",
+        "description": "Returns a SAS URL to download the script output file after the action status is Succeeded. The output confirms the cron job was scheduled successfully. A successful offboard shows exit_code=0 in the downloaded JSON. Only call this after GetOffboardActionStatus returns status=Succeeded.",
+        "parameters": [
+          {
+            "name": "actionId",
+            "in": "path",
+            "required": true,
+            "description": "Machine action ID from RunLinuxOffboard (must be in Succeeded state)",
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "SAS download URL for the script output",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/LiveResponseResultLink" }
+              }
+            }
+          },
+          "404": { "description": "Action not found or result not available yet" }
+        }
+      }
+    }
+
+  }
+}
